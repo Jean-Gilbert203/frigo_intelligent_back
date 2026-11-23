@@ -42,6 +42,9 @@ public interface AlimentEnStockRepository extends JpaRepository<AlimentEnStock, 
     Optional<AlimentEnStock> findFirstByDictionnaireIdAndCompartimentIdAndDatePeremption(
             Integer idAliment, Integer idCompartiment, LocalDate datePeremption);
 
-    // Suppression des lots vides d'un aliment (règle R6)
+    // Suppression des lots vides d'un aliment 
     long deleteByDictionnaireIdAndQuantite(Integer idAliment, Integer quantite);
+
+     // Vrai si l'aliment a au moins un lot (il est alors « suivi »)
+    boolean existsByDictionnaireId(Integer idAliment);
 }

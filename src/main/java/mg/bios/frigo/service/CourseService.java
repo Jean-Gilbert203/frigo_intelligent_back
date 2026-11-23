@@ -67,6 +67,12 @@ public class CourseService {
         return liste;
     }
 
+    // Les lignes encore « à acheter »
+    @Transactional(readOnly = true)
+    public List<CourseDto> aAcheter() {
+        return lire().stream().filter(c -> "A_ACHETER".equals(c.statut())).toList();
+    }
+
     @Transactional
     public CourseDto marquerAchete(Integer id) {
         LigneCourse ligne = trouver(id);
