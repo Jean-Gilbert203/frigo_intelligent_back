@@ -37,7 +37,7 @@ public class SurveillanceService {
     public ResultatSurveillance verifier() {
         LocalDate aujourdhui = LocalDate.now();
 
-        // Les lots, regroupés par aliment suivi 
+        // Les lots, regroupés par aliment suivi (un aliment est suivi s'il a au moins un lot)
         Map<Integer, List<AlimentEnStock>> parAliment = new LinkedHashMap<>();
         for (AlimentEnStock lot : stockRepository.findAllAvecDetails()) {
             parAliment.computeIfAbsent(lot.getDictionnaire().getId(), cle -> new ArrayList<>()).add(lot);
@@ -49,7 +49,7 @@ public class SurveillanceService {
         for (List<AlimentEnStock> groupe : parAliment.values()) {
             DictionnaireAliment aliment = groupe.get(0).getDictionnaire();
 
-            // Stock disponible et liste de courses
+            // 1. Stock disponible (lots périmés exclus) et liste de courses
             int disponible = 0;
             for (AlimentEnStock lot : groupe) {
                 if (!lot.estPerime(aujourdhui)) {
@@ -61,10 +61,7 @@ public class SurveillanceService {
                 coursesModifiees = true;
             }
 
-            // Notifications de stock 
-            notifications += notificationService.notifierStock(aliment, disponible, courses);
-
-            // Péremption 
+            // 2. Péremption : seuls les lots non vides comptent
             boolean perime = false;
             boolean bientot = false;
             for (AlimentEnStock lot : groupe) {
@@ -78,14 +75,26 @@ public class SurveillanceService {
                     bientot = true;
                 }
             }
-            if (perime) {
+
+            // 3. Notifications
+            if (perime && disponible == 0) {
+                // Un seul message : le produit est périmé ET il n'en reste plus de consommable
+                String suite = courses ? " Ajouté à la liste de courses." : "";
                 notifications += notificationService.notifierAdmins(TypeNotification.PEREMPTION,
                         "Produit périmé",
-                        aliment.getNom() + " : au moins un lot est périmé, à jeter.", aliment, null);
-            } else if (bientot) {
-                notifications += notificationService.notifierAdmins(TypeNotification.PEREMPTION,
-                        "Péremption proche",
-                        aliment.getNom() + " : un lot arrive bientôt à péremption.", aliment, null);
+                        aliment.getNom() + " : lot périmé, plus aucune unité consommable." + suite,
+                        aliment, null);
+            } else {
+                notifications += notificationService.notifierStock(aliment, disponible, courses);
+                if (perime) {
+                    notifications += notificationService.notifierAdmins(TypeNotification.PEREMPTION,
+                            "Produit périmé",
+                            aliment.getNom() + " : au moins un lot est périmé, à jeter.", aliment, null);
+                } else if (bientot) {
+                    notifications += notificationService.notifierAdmins(TypeNotification.PEREMPTION,
+                            "Péremption proche",
+                            aliment.getNom() + " : un lot arrive bientôt à péremption.", aliment, null);
+                }
             }
         }
         return new ResultatSurveillance(notifications, coursesModifiees);

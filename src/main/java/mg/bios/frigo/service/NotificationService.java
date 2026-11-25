@@ -42,8 +42,8 @@ public class NotificationService {
     public boolean notifier(Utilisateur destinataire, TypeNotification type, String titre,
                             String message, DictionnaireAliment aliment,
                             OuverturePorte ouverture, SupermarcheSimule magasin) {
-        if (aliment != null && repository.existsByDestinataireIdAndTypeAndAlimentIdAndLuFalse(
-                destinataire.getId(), type, aliment.getId())) {
+        if (aliment != null && repository.existsByDestinataireIdAndTypeAndAlimentIdAndTitreAndLuFalse(
+            destinataire.getId(), type, aliment.getId(), titre)) {
             return false;
         }
         if (ouverture != null && repository.existsByDestinataireIdAndTypeAndOuvertureId(

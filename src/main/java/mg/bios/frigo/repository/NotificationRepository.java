@@ -22,9 +22,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
          + "ORDER BY n.dateEnvoi DESC, n.id DESC")
     List<Notification> findNonLues(@Param("idUtilisateur") Integer idUtilisateur);
 
-    // Anti-doublon : une notification non lue du même type existe déjà pour cet aliment
-    boolean existsByDestinataireIdAndTypeAndAlimentIdAndLuFalse(
-            Integer idUtilisateur, TypeNotification type, Integer idAliment);
+     // Anti-doublon : une notification identique (même type, même aliment, même titre) n'est pas encore lue
+    boolean existsByDestinataireIdAndTypeAndAlimentIdAndTitreAndLuFalse(
+            Integer idUtilisateur, TypeNotification type, Integer idAliment, String titre);
 
     // Anti-doublon : une notification du même type existe déjà pour cette session de porte
     boolean existsByDestinataireIdAndTypeAndOuvertureId(

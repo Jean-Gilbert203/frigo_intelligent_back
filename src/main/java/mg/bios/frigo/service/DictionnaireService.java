@@ -75,7 +75,7 @@ public class DictionnaireService {
         aliment.setNom(nom);
         aliment.setCategorie(categorie);
         aliment.setSeuilMinimum(seuil);
-        aliment.setImage("defaut.svg");
+        aliment.setImage("defaut.png");
         return versDto(repository.save(aliment));
     }
 
