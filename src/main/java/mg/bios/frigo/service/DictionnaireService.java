@@ -14,6 +14,7 @@ import mg.bios.frigo.repository.DictionnaireAlimentRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class DictionnaireService {
@@ -27,19 +28,22 @@ public class DictionnaireService {
     private final CourseService courseService;
     private final NotificationService notificationService;
     private final DiffusionService diffusion;
+    private final ImageService imageService;
 
     public DictionnaireService(DictionnaireAlimentRepository repository,
                                CategorieRepository categorieRepository,
                                AlimentEnStockRepository stockRepository,
                                CourseService courseService,
                                NotificationService notificationService,
-                               DiffusionService diffusion) {
+                               DiffusionService diffusion,
+                               ImageService imageService) {
         this.repository = repository;
         this.categorieRepository = categorieRepository;
         this.stockRepository = stockRepository;
         this.courseService = courseService;
         this.notificationService = notificationService;
         this.diffusion = diffusion;
+        this.imageService = imageService;
     }
 
     @Transactional
@@ -57,7 +61,6 @@ public class DictionnaireService {
                     "Cet aliment existe déjà dans le dictionnaire : " + nom);
         }
 
-        // Seuil : 1 par défaut, jamais négatif
         int seuil = requete.seuilMinimum() == null ? 1 : requete.seuilMinimum();
         if (seuil < 0) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "SEUIL_INVALIDE",
@@ -115,6 +118,20 @@ public class DictionnaireService {
                 diffusion.evenement("/topic/courses", "COURSES_MODIFIEES");
             }
         }
+        diffusion.evenement("/topic/stocks", "STOCK_MODIFIE");
+        return versDto(aliment);
+    }
+
+    // L'image envoyée remplace celle de l'aliment ; l'ancienne image ajoutée de cette façon est supprimée
+    @Transactional
+    public DictionnaireDto televerserImage(Integer id, MultipartFile fichier) {
+        DictionnaireAliment aliment = repository.findById(id)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "ALIMENT_INCONNU",
+                        "Aliment inconnu : " + id));
+        String ancienne = aliment.getImage();
+        aliment.setImage(imageService.enregistrer(aliment.getNom(), fichier));
+        aliment = repository.save(aliment);
+        imageService.supprimer(ancienne);
         diffusion.evenement("/topic/stocks", "STOCK_MODIFIE");
         return versDto(aliment);
     }

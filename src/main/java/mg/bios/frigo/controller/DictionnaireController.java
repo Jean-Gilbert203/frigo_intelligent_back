@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/dictionnaire")
@@ -56,5 +58,13 @@ public class DictionnaireController {
     public DictionnaireDto modifier(@PathVariable Integer id, @RequestBody DictionnaireModification requete) {
         identite.exigerAdmin();
         return dictionnaireService.modifier(id, requete);
+    }
+
+    // Image envoyée depuis le téléphone (formulaire multipart, champ « fichier ») 
+    @PostMapping("/{id}/image")
+    public DictionnaireDto televerserImage(@PathVariable Integer id,
+                                           @RequestParam("fichier") MultipartFile fichier) {
+        identite.exigerAdmin();
+        return dictionnaireService.televerserImage(id, fichier);
     }
 }
